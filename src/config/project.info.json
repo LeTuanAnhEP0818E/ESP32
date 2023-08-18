@@ -1,0 +1,10 @@
+{
+  "description": "test",
+  "address": "0xf6627b2480caaf20f6783918eed2cb3916d829d2",
+  "position": {
+    "lat": 22.345,
+    "lng": 105.678
+  },
+  "project": 1,
+  "type": 20
+}

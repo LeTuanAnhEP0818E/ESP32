@@ -1,0 +1,11 @@
+{
+  "id": 310,
+  "project": 1,
+  "address": "0xf6627b2480caaf20f6783918eed2cb3916d829d2",
+  "type": 20,
+  "status": 0,
+  "position": {
+    "lat": 22.345,
+    "lng": 105.678
+  }
+}

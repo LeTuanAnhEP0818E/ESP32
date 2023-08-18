@@ -1,0 +1,92 @@
+Write me a yaml specification for an app with this description:
+File name: app.ts (the main entry point of the app)
+Imported Components: PowerMeter, GPS, Wallet. Those are three class imported from their corresponding file.
+Component Functions:
+- PowerMeter: 
+    - constructor: const powermeter = new PowerMeter; 
+    - this object will periodically update the powermeter.totalWh value itself
+    - when we want to get the totalWh value, we call `powermeter.totalWh` property
+- GPS: 
+    - const gps = new GPS(); 
+    - this object will periodically update its `gps.lng` and `gps.lat` values itself
+    - we can access its public properties `gps.lng` and `gps.lat` values from app.ts 
+- Wallet: 
+    - const wallet = new Wallet();
+    - public methods and attributes:
+        - wallet.signEIP712(data) --> {r, s, v} signature values
+        - wallet.address --> the ethereum public address of this wallet
+        - wallet.getNonce() --> the current nonce of this wallet (get from the eth main net)
+
+The app work flow:
+- 1. (At the first time startup) Check if the `registered.log` file exists. If it doesn't exist --> use axios to perform a POST request to "mydomain.org" to register this device with the payload is wallet.address, then create the registered.log to write the response from server to mark that this device was registered. If the file exists --> pass (no need to register again)
+- 2. In the main function. This app will run periodically (constantly - using setTimeout recursively) to perform the following actions:
+    - collect the measured data: gps.lng, gps.lat, powermeter.totalWh --> build a data struct to be signed
+    - call wallet.getNonce() to update wallet.nonce before signing (this function is a promise, it should be called by using await)
+    - sign the data using wallet.signEIP712(data) --> payload = {raw_data_struct, r, s, v} 
+    - if the above signing success --> persist the payload into a log file (payload.log) 
+    - then use axios to POST the payload to the server (mydomain.org/mint)
+    - if the above POST succeeded --> wait for `interval` to start the next iteration (step 2).
+    - if the above POST is failed (error timeout due to network disconnection or receive status code >= 400 ...) then wait for `interval` to start the next iteration. 
+    - In each iteration: should check the newly updated `raw_data_struct` with the `raw_data_struct` read from the `payload.log`: if the data changed --> perfom signing and POST; if the data unchanged check that the previous time POST failed? If the previous post failed (in a log file) --> re-post the payload.
+
+----- The ChatGPT answer: -----
+
+# app.yaml
+
+# app name and description
+name: My App
+description: A description of my app.
+
+# file name and main entry point of the app
+file_name: app.ts
+
+# imported components
+components:
+  - name: PowerMeter
+    path: ./PowerMeter.ts
+  - name: GPS
+    path: ./GPS.ts
+  - name: Wallet
+    path: ./Wallet.ts
+
+# component functions
+PowerMeter:
+  constructor: const powermeter = new PowerMeter;
+  update_totalWh: |
+    this object will periodically update the powermeter.totalWh value itself.
+    When we want to get the totalWh value, we call `powermeter.totalWh` property.
+
+GPS:
+  constructor: const gps = new GPS();
+  update_lng_lat: |
+    this object will periodically update its `gps.lng` and `gps.lat` values itself.
+    We can access its public properties `gps.lng` and `gps.lat` values from app.ts.
+
+Wallet:
+  constructor: const wallet = new Wallet();
+  public_methods:
+    - wallet.signEIP712(data) --> {r, s, v} signature values.
+    - wallet.address --> the ethereum public address of this wallet.
+    - wallet.getNonce() --> the current nonce of this wallet (get from the eth main net).
+
+# app workflow
+startup:
+  check_registered_log: |
+    Check if the `registered.log` file exists. If it doesn't exist --> use axios to perform a POST request to "mydomain.org" to register this device with the payload is wallet.address, then create the registered.log to write the response from server to mark that this device was registered. If the file exists --> pass (no need to register again).
+
+main:
+  interval: 10000 # 10 seconds
+  collect_data: |
+    Collect the measured data: gps.lng, gps.lat, powermeter.totalWh --> build a data struct to be signed.
+  get_nonce: |
+    Call wallet.getNonce() to update wallet.nonce before signing (this function is a promise, it should be called by using await).
+  sign_data: |
+    Sign the data using wallet.signEIP712(data) --> payload = {raw_data_struct, r, s, v}.
+  persist_payload: |
+    If the above signing success --> persist the payload into a log file (payload.log).
+  post_payload: |
+    Then use axios to POST the payload to the server (mydomain.org/mint).
+  check_payload: |
+    In each iteration: should check the newly updated `raw_data_struct` with the `raw_data_struct` read from the `payload.log`: if the data changed --> perfom signing and POST; if the data unchanged check that the previous time POST failed? If the previous post failed (in a log file) --> re-post the payload.
+
+
